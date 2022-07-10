@@ -12,16 +12,28 @@ gameboard factory
 
 */
 
-const shipFactory = (length, n) => {
+const shipFactory = (length) => {
+  const getInfo = (l) => {
+    switch (l) {
+      case 0:
+        return { name: "Destroyer", life: 2, length: 2 };
+      case 1:
+        return { name: "Submarine", life: 3, length: 3 };
+      case 2:
+        return { name: "Cruiser", life: 3, length: 3 };
+      case 3:
+        return { name: "Battleship", life: 4, length: 4 };
+      case 4:
+        return { name: "Carrier", life: 5, length: 5 };
+    }
+  };
   return {
-    length,
-    name: n,
-    life: length,
+    info: getInfo(length),
     hit() {
-      this.life--;
+      this.info.life -= 1;
     },
     isSunk() {
-      if (this.life == 0) {
+      if (this.info.life == 0) {
         return true;
       } else {
         return false;
@@ -41,8 +53,8 @@ const gameboardFactory = () => {
     return board;
   };
   const makeShips = (s) => {
-    for (let i = 0; i < 5; ) {
-      s[i] = shipFactory(i, i);
+    for (let i = 0; i < 5; ++i) {
+      s[i] = shipFactory(i);
     }
   };
   let ships = new Array(5);
@@ -55,30 +67,32 @@ const gameboardFactory = () => {
       let c = 0;
       if (this.checkOverFlow(ship, startX, startY, direction)) {
         if (direction == 0) {
-          for (let i = 0; i < ship.length; ++i) {
-            board[startY + i][startX] = ship.name;
+          for (let i = 0; i < ship.info.length; ++i) {
+            board[startY + i][startX] = this.ships.indexOf(ship);
           }
         } else {
-          for (let i = 0; i < ship.length; ++i) {
-            board[startY][startX + i] = ship.name;
+          for (let i = 0; i < ship.info.length; ++i) {
+            board[startY][startX + i] = this.ships.indexOf(ship);
           }
         }
       }
     },
     checkOverFlow(ship, startX, startY, direction) {
       if (direction == 0) {
-        if (startY + ship.length < 9) {
+        if (startY + ship.info.length < 9) {
           return true;
         }
-      } else if (startX + ship.length < 9) {
+      } else if (startX + ship.info.length < 9) {
         return true;
       }
     },
     recieveAttack(x, y) {
-      if (board[y][x] != "x" && board[y][x] != "m") {
-        if (board[y][x] == "-") {
+      let value = board[y][x];
+      if (value != "x" && value != "m") {
+        if (value == "-") {
           board[y][x] = "m";
         } else {
+          ships[value].hit();
           board[y][x] = "x";
         }
       } else {
@@ -108,14 +122,24 @@ const playerFactory = () => {
 const game = () => {
   let cpu = new playerFactory();
   let player = new playerFactory();
-  let turn = 0;
+  for (let i = 0; i < 5; ++i) {
+    player.playerBoard.placeShip(player.playerBoard.ships[i], i, 0, 0);
+  }
+  for (let i = 0; i < 5; ++i) {
+    cpu.playerBoard.placeShip(player.playerBoard.ships[i], i, 0, 0);
+  }
+
+  // let turn = true;
   // do {
   // if (turn == 0) {
   // }
   // } while (condition);
+  return { player: player, cpu: cpu };
 };
+
 module.exports = {
   shipFactory: shipFactory,
   gameboardFactory: gameboardFactory,
   playerFactory: playerFactory,
+  game: game,
 };
